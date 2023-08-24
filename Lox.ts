@@ -1,29 +1,41 @@
-const file =  Deno.args[0];
+class Lox {
+  static hadError = false;
+  static report(line: number, where: string, message: string) {
+    console.error(`[line ${line}] Error ${where}: ${message}`);
+    this.hadError = true;
+  }
 
-if(Deno.args.length > 1) {
-	console.log("Usage: tlox [script]");
-	Deno.exit(64);
+  static error(line: number, message: string) {
+    this.report(line, "", message);
+  }
+
+  static async runFile(path: string) {
+    const text = await Deno.readTextFile(path);
+    console.log(text);
+    this.run(text);
+    if (this.hadError) Deno.exit(65);
+  }
+
+  static runPrompt() {
+    for (;;) {
+      const line = prompt(">");
+      this.run(line);
+      this.hadError = false;
+    }
+  }
+
+  static run(line: string | null) {
+    console.log(line);
+  }
 }
-else if(Deno.args.length == 1) {
-	runFile(file);
+const file = Deno.args[0];
+
+const lox = new Lox();
+if (Deno.args.length > 1) {
+  console.log("Usage: tlox [script]");
+  Deno.exit(64);
+} else if (Deno.args.length == 1) {
+  Lox.runFile(file);
 } else {
-	runPrompt();
-}
-
-async function runFile(path:string) {
-	const text = await Deno.readTextFile(path);
-	console.log(text);
-	run(text);
-}
-
-async function runPrompt() {
-
-	for(;;) {
-		const line = prompt(">");
-		run(line);
-	}
-}
-
-function run(line:string | null){
-	console.log(line);
+  Lox.runPrompt();
 }
