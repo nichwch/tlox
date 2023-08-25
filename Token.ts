@@ -1,4 +1,4 @@
-class Token {
+export class Token {
   type: TokenType;
   lexeme: string;
   literal: any;
