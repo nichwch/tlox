@@ -1,5 +1,6 @@
 import { Token } from "./Token.ts";
 import { TokenType } from "./TokenType.ts";
+import { Lox } from "./Lox.ts";
 class Scanner {
   source: string;
   tokens: Token[] = [];
@@ -18,6 +19,7 @@ class Scanner {
     this.tokens.push(new Token(TokenType.EOF, "", null, this.line));
     return this.tokens;
   }
+
   isAtEnd(): boolean {
     return this.current >= this.source.length;
   }
@@ -55,6 +57,50 @@ class Scanner {
       case "*":
         this.addToken(TokenType.STAR, null);
         break;
+      case "!":
+        this.addToken(
+          this.match("=") ? TokenType.BANG_EQUAL : TokenType.BANG,
+          null
+        );
+        break;
+      case "=":
+        this.addToken(
+          this.match("=") ? TokenType.EQUAL_EQUAL : TokenType.EQUAL,
+          null
+        );
+        break;
+      case "<":
+        this.addToken(
+          this.match("=") ? TokenType.LESS_EQUAL : TokenType.LESS,
+          null
+        );
+        break;
+      case ">":
+        this.addToken(
+          this.match("=") ? TokenType.GREATER_EQUAL : TokenType.GREATER,
+          null
+        );
+        break;
+      case "/":
+        if (this.match("/")) {
+          while (this.peek() !== "\n" && !this.isAtEnd()) this.advance();
+        } else {
+          this.addToken(TokenType.SLASH, null);
+        }
+        break;
+      case " ":
+      case "\r":
+      case "\t":
+        break;
+      case "\n":
+        this.line++;
+        break;
+      case '"':
+        this.string();
+        break;
+      default:
+        Lox.error(this.line, "Unexpected character.");
+        break;
     }
   }
   advance(): string {
@@ -63,5 +109,32 @@ class Scanner {
   addToken(type: TokenType, literal: any) {
     const text: string = this.source.substring(this.start, this.current);
     this.tokens.push(new Token(type, text, literal, this.line));
+  }
+  match(expected: string): boolean {
+    if (this.isAtEnd()) return false;
+    if (this.source[this.current] !== expected) return false;
+    this.current++;
+    return true;
+  }
+  peek(): string {
+    if (this.isAtEnd()) return "\0";
+    return this.source[this.current];
+  }
+  string() {
+    while (this.peek() != '"' && !this.isAtEnd()) {
+      if (this.peek() === "\n") this.line++;
+      this.advance();
+    }
+    if (this.isAtEnd()) {
+      Lox.error(this.line, "Unterminated string.");
+      return;
+    }
+    // handle closing "
+    this.advance();
+    const value: string = this.source.substring(
+      this.start + 1,
+      this.current - 1
+    );
+    this.addToken(TokenType.STRING, value);
   }
 }
