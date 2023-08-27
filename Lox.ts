@@ -1,4 +1,5 @@
-class Lox {
+import { Scanner } from "./Scanner.ts";
+export class Lox {
   static hadError = false;
   static report(line: number, where: string, message: string) {
     console.error(`[line ${line}] Error ${where}: ${message}`);
@@ -19,13 +20,19 @@ class Lox {
   static runPrompt() {
     for (;;) {
       const line = prompt(">");
+      if (line === null) break;
       this.run(line);
       this.hadError = false;
     }
   }
 
-  static run(line: string | null) {
-    console.log(line);
+  static run(source: string) {
+    const scanner = new Scanner(source);
+    const tokens = scanner.scanTokens();
+
+    for (const token of tokens) {
+      console.log(token);
+    }
   }
 }
 const file = Deno.args[0];

@@ -1,12 +1,32 @@
 import { Token } from "./Token.ts";
 import { TokenType } from "./TokenType.ts";
 import { Lox } from "./Lox.ts";
-class Scanner {
+export class Scanner {
   source: string;
   tokens: Token[] = [];
   start: number = 0;
   current: number = 0;
   line: number = 1;
+  static keywords = new Map(
+    Object.entries({
+      and: TokenType.AND,
+      class: TokenType.CLASS,
+      else: TokenType.ELSE,
+      false: TokenType.FALSE,
+      for: TokenType.FOR,
+      fun: TokenType.FUN,
+      if: TokenType.IF,
+      nil: TokenType.NIL,
+      or: TokenType.OR,
+      print: TokenType.PRINT,
+      return: TokenType.RETURN,
+      super: TokenType.SUPER,
+      this: TokenType.THIS,
+      true: TokenType.TRUE,
+      var: TokenType.VAR,
+      while: TokenType.WHILE,
+    })
+  );
   constructor(source: string) {
     this.source = source;
   }
@@ -99,7 +119,13 @@ class Scanner {
         this.string();
         break;
       default:
-        Lox.error(this.line, "Unexpected character.");
+        if (this.isDigit(c)) {
+          this.number();
+        } else if (this.isAlpha(c)) {
+          this.identifier();
+        } else {
+          Lox.error(this.line, "Unexpected character.");
+        }
         break;
     }
   }
@@ -120,8 +146,12 @@ class Scanner {
     if (this.isAtEnd()) return "\0";
     return this.source[this.current];
   }
+  peekNext(): string {
+    if (this.current + 1 >= this.source.length) return "\0";
+    return this.source[this.current + 1];
+  }
   string() {
-    while (this.peek() != '"' && !this.isAtEnd()) {
+    while (this.peek() !== '"' && !this.isAtEnd()) {
       if (this.peek() === "\n") this.line++;
       this.advance();
     }
@@ -136,5 +166,35 @@ class Scanner {
       this.current - 1
     );
     this.addToken(TokenType.STRING, value);
+  }
+  isDigit(c: string) {
+    return Number(c) >= 0 && Number(c) <= 9 && isNaN(Number(c));
+  }
+
+  number() {
+    while (this.isDigit(this.peek())) this.advance();
+    if (this.peek() === "." && this.isDigit(this.peekNext())) {
+      this.advance();
+      while (this.isDigit(this.peek())) this.advance();
+    }
+    this.addToken(
+      TokenType.NUMBER,
+      Number(this.source.substring(this.start, this.current))
+    );
+  }
+  isAlpha(c: string) {
+    return (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c === "_";
+  }
+  identifier() {
+    while (this.isAlphaNumeric(this.peek())) this.advance();
+    const text: string = this.source.substring(this.start, this.current);
+    let type = Scanner.keywords.get(text);
+    if (!type) {
+      type = TokenType.IDENTIFIER;
+    }
+    this.addToken(TokenType.IDENTIFIER, null);
+  }
+  isAlphaNumeric(c: string) {
+    return this.isAlpha(c) || this.isDigit(c);
   }
 }

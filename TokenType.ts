@@ -1,4 +1,4 @@
-enum TokenType {
+export enum TokenType {
   // Single-character tokens.
   LEFT_PAREN,
   RIGHT_PAREN,
@@ -24,7 +24,7 @@ enum TokenType {
   // Literals.
   IDENTIFIER,
   STRING,
-  NUMBEr,
+  NUMBER,
 
   // Keywords.
   AND,
