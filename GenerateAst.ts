@@ -15,12 +15,30 @@ const defineAst = async (
     await defineType(path, baseName, className, fields);
   }
   await Deno.writeTextFile(path, ``, { append: true });
-  await Deno.writeTextFile(path, ``, { append: true });
+  await Deno.writeTextFile(path, ` abstract accept<R>(visitor:Visitor<R>):R`, {
+    append: true,
+  });
   await Deno.writeTextFile(path, ``, { append: true });
 
   await Deno.writeTextFile(path, `}`, { append: true });
 };
+const defineVisitor = async (
+  path: string,
+  baseName: string,
+  types: string[]
+) => {
+  await Deno.writeTextFile(path, `interface Visitor<R> {`, { append: true });
 
+  for (const type of types) {
+    const typeName = type.split("$")[0].trim();
+    await Deno.writeTextFile(
+      path,
+      ` visit${typeName}${baseName}:R (${baseName.toLowerCase()}:${typeName});`,
+      { append: true }
+    );
+    await Deno.writeTextFile(path, " }", { append: true });
+  }
+};
 const defineType = async (
   path: string,
   baseName: string,
